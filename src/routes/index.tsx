@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
 import { Header } from "@/components/Header";
-import { TaskInput } from "@/components/TaskInput";
+import { TaskForm } from "@/components/TaskForm";
 import { TaskList } from "@/components/TaskList";
 import { Loader2 } from "lucide-react";
 
@@ -35,13 +35,15 @@ function Index() {
     <div className="min-h-screen bg-background">
       <Header email={user.email ?? ""} onSignOut={signOut} />
       <main className="max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Suas tarefas</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Adicione, organize e acompanhe o que precisa ser feito.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Suas tarefas</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Organize por prazo, prioridade e acompanhe o que está vencendo.
+            </p>
+          </div>
+          <TaskForm onAdd={addTask} />
         </div>
-        <TaskInput onAdd={addTask} />
         <TaskList
           tasks={tasks}
           loading={tasksLoading}
