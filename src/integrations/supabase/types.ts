@@ -18,21 +18,30 @@ export type Database = {
         Row: {
           completed: boolean
           created_at: string
+          description: string | null
+          due_date: string | null
           id: string
+          priority: Database["public"]["Enums"]["task_priority"]
           title: string
           user_id: string
         }
         Insert: {
           completed?: boolean
           created_at?: string
+          description?: string | null
+          due_date?: string | null
           id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
           title: string
           user_id: string
         }
         Update: {
           completed?: boolean
           created_at?: string
+          description?: string | null
+          due_date?: string | null
           id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
           title?: string
           user_id?: string
         }
@@ -46,7 +55,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      task_priority: "baixa" | "media" | "alta" | "urgente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +182,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      task_priority: ["baixa", "media", "alta", "urgente"],
+    },
   },
 } as const
