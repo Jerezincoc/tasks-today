@@ -30,13 +30,17 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Todo List — Organize suas tarefas" },
+      { title: "To do List — Organize suas tarefas" },
       { name: "description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Todo List — Organize suas tarefas" },
-      { property: "og:description", content: "Aplicativo de lista de tarefas com autenticação." },
+      { property: "og:title", content: "To do List — Organize suas tarefas" },
+      { property: "og:description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "To do List — Organize suas tarefas" },
+      { name: "twitter:description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e830cbdb-1d39-4e0a-ad1b-b46c6e45dd40" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e830cbdb-1d39-4e0a-ad1b-b46c6e45dd40" },
     ],
     links: [
       {
