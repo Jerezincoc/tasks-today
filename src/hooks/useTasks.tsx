@@ -1,13 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Priority } from "@/lib/tasks";
 
 export interface Task {
   id: string;
   user_id: string;
   title: string;
+  description: string | null;
   completed: boolean;
   created_at: string;
+  due_date: string | null;
+  priority: Priority;
+}
+
+export interface NewTaskInput {
+  title: string;
+  description?: string | null;
+  due_date?: string | null;
+  priority: Priority;
 }
 
 export function useTasks(userId: string | undefined) {
@@ -23,7 +34,7 @@ export function useTasks(userId: string | undefined) {
     if (error) {
       toast.error("Erro ao carregar tarefas", { description: error.message });
     } else {
-      setTasks(data ?? []);
+      setTasks((data ?? []) as Task[]);
     }
     setLoading(false);
   }, [userId]);
@@ -37,7 +48,6 @@ export function useTasks(userId: string | undefined) {
     setLoading(true);
     loadTasks();
 
-    // Realtime subscription
     const channel = supabase
       .channel(`tasks-${userId}`)
       .on(
@@ -66,11 +76,15 @@ export function useTasks(userId: string | undefined) {
     };
   }, [userId, loadTasks]);
 
-  const addTask = async (title: string) => {
+  const addTask = async (input: NewTaskInput) => {
     if (!userId) return;
-    const { error } = await supabase
-      .from("tasks")
-      .insert({ title, user_id: userId });
+    const { error } = await supabase.from("tasks").insert({
+      user_id: userId,
+      title: input.title,
+      description: input.description ?? null,
+      due_date: input.due_date ?? null,
+      priority: input.priority,
+    });
     if (error) {
       toast.error("Erro ao criar tarefa", { description: error.message });
     } else {
@@ -79,15 +93,10 @@ export function useTasks(userId: string | undefined) {
   };
 
   const toggleTask = async (id: string, completed: boolean) => {
-    // Optimistic update
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed } : t)));
-    const { error } = await supabase
-      .from("tasks")
-      .update({ completed })
-      .eq("id", id);
+    const { error } = await supabase.from("tasks").update({ completed }).eq("id", id);
     if (error) {
       toast.error("Erro ao atualizar tarefa", { description: error.message });
-      // revert
       setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !completed } : t)));
     }
   };
