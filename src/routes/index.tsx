@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { supabase } from "@/integrations/supabase/client";
 import { useTasks } from "@/hooks/useTasks";
 import { Header } from "@/components/Header";
 import { TaskForm } from "@/components/TaskForm";
@@ -22,9 +23,17 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, initializeAuth } = useAuthStore();
   const navigate = useNavigate();
   const prefs = usePreferences();
+
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const signOut = async () => {
+     await supabase.auth.signOut();
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);

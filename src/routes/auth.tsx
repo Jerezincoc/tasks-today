@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/useAuthStore";
 import { AuthForm } from "@/components/AuthForm";
 import { Loader2 } from "lucide-react";
 
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {

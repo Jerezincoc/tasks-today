@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { supabase } from "@/integrations/supabase/client";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +12,8 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuthStore();
+  const signOut = () => supabase.auth.signOut();
   const { setPreferences, ...prefs } = usePreferences();
 
   return (
