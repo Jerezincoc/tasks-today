@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Plus, Loader2 } from "lucide-react";
+import { CalendarIcon, Plus, Loader2, Repeat, Tag as TagIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PRIORITY_LABELS, type Priority } from "@/lib/tasks";
-import type { NewTaskInput } from "@/hooks/useTasks";
-import { motion, AnimatePresence } from "framer-motion";
+import type { NewTaskInput, Task } from "@/hooks/useTasks";
+import { parseQuickAdd } from "@/lib/nlp";
 
 const schema = z.object({
   title: z.string().trim().min(1, "Digite o título").max(500, "Máximo de 500 caracteres"),
@@ -37,17 +37,48 @@ const schema = z.object({
 });
 
 interface TaskFormProps {
-  onAdd: (input: NewTaskInput) => Promise<void>;
+  onSave: (input: NewTaskInput | Partial<Task>) => Promise<void>;
+  initialData?: Task;
+  trigger?: React.ReactNode;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function TaskForm({ onAdd }: TaskFormProps) {
-  const [open, setOpen] = useState(false);
+export function TaskForm({ onSave, initialData, trigger, isOpen, onOpenChange }: TaskFormProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [time, setTime] = useState("08:00");
   const [priority, setPriority] = useState<Priority>("media");
+  const [recurrence, setRecurrence] = useState("none");
+  const [tags, setTags] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setTitle(initialData.title);
+        setDescription(initialData.description || "");
+        setPriority(initialData.priority);
+        setRecurrence(initialData.recurrence || "none");
+        setTags(initialData.tags || []);
+        if (initialData.due_date) {
+          const d = new Date(initialData.due_date);
+          setDate(d);
+          setTime(format(d, "HH:mm"));
+        } else {
+          setDate(undefined);
+          setTime("08:00");
+        }
+      } else {
+        reset();
+      }
+    }
+  }, [open, initialData]);
 
   const reset = () => {
     setTitle("");
@@ -55,6 +86,26 @@ export function TaskForm({ onAdd }: TaskFormProps) {
     setDate(undefined);
     setTime("08:00");
     setPriority("media");
+    setRecurrence("none");
+    setTags([]);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTitle(val);
+    
+    // Quick Add logic (NLP) only when creating new task
+    if (!initialData && val.endsWith(" ")) {
+      const parsed = parseQuickAdd(val);
+      if (parsed.priority !== undefined) setPriority(parsed.priority);
+      if (parsed.due_date !== undefined) setDate(parsed.due_date);
+      if (parsed.tags && parsed.tags.length > 0) {
+        setTags(prev => Array.from(new Set([...prev, ...parsed.tags!])));
+      }
+      if (parsed.title !== title) {
+         setTitle(parsed.title);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,13 +122,15 @@ export function TaskForm({ onAdd }: TaskFormProps) {
       }
 
       setSubmitting(true);
-      await onAdd({
+      await onSave({
         title: parsed.title,
         description: parsed.description ?? null,
         due_date: dueIso,
         priority,
+        recurrence,
+        tags
       });
-      reset();
+      if (!initialData) reset();
       setOpen(false);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -89,40 +142,49 @@ export function TaskForm({ onAdd }: TaskFormProps) {
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) reset();
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button className="h-12 px-6 rounded-full shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all w-full sm:w-auto font-semibold group">
-          <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-          Nova Tarefa
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button className="h-12 px-6 rounded-full shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all w-full sm:w-auto font-semibold group">
+            <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+            Nova Tarefa
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md rounded-[24px] border-white/10 bg-card/80 backdrop-blur-3xl shadow-2xl overflow-hidden p-0">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
         <div className="p-6 relative z-10">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold tracking-tight">Criar Nova Tarefa</DialogTitle>
+            <DialogTitle className="text-2xl font-bold tracking-tight">
+              {initialData ? "Editar Tarefa" : "Criar Nova Tarefa"}
+            </DialogTitle>
             <DialogDescription className="text-muted-foreground/80 font-medium">
               Defina os detalhes, prazo e prioridade da sua tarefa.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-5 mt-6">
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6">
             <div className="space-y-2">
               <Label htmlFor="title" className="font-semibold text-foreground/90">Título</Label>
               <Input
                 id="title"
-                placeholder="Ex: Finalizar a apresentação de sexta"
+                placeholder={!initialData ? "Ex: Ir ao médico amanhã prioridade alta #saúde" : "Título..."}
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
                 maxLength={500}
                 autoFocus
                 className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl"
               />
+              {tags.length > 0 && (
+                <div className="flex gap-2 mt-2 flex-wrap">
+                   {tags.map(tag => (
+                     <span key={tag} className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-md font-bold flex items-center">
+                       <TagIcon className="h-3 w-3 mr-1" /> {tag}
+                     </span>
+                   ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -133,7 +195,7 @@ export function TaskForm({ onAdd }: TaskFormProps) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={2000}
-                rows={3}
+                rows={2}
                 className="resize-none bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl"
               />
             </div>
@@ -194,20 +256,37 @@ export function TaskForm({ onAdd }: TaskFormProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="font-semibold text-foreground/90">Prioridade</Label>
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                <SelectTrigger className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl data-[state=open]:ring-primary/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl shadow-xl">
-                  {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
-                    <SelectItem key={p} value={p} className="rounded-lg my-0.5 font-medium cursor-pointer">
-                      {PRIORITY_LABELS[p]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-semibold text-foreground/90">Prioridade</Label>
+                <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                  <SelectTrigger className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl data-[state=open]:ring-primary/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl shadow-xl">
+                    {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
+                      <SelectItem key={p} value={p} className="rounded-lg my-0.5 font-medium cursor-pointer">
+                        {PRIORITY_LABELS[p]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-semibold text-foreground/90 flex items-center"><Repeat className="w-3 h-3 mr-1" /> Repetir</Label>
+                <Select value={recurrence} onValueChange={setRecurrence}>
+                  <SelectTrigger className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl data-[state=open]:ring-primary/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl shadow-xl">
+                    <SelectItem value="none" className="rounded-lg my-0.5 font-medium cursor-pointer">Não repete</SelectItem>
+                    <SelectItem value="daily" className="rounded-lg my-0.5 font-medium cursor-pointer">Diariamente</SelectItem>
+                    <SelectItem value="weekly" className="rounded-lg my-0.5 font-medium cursor-pointer">Semanalmente</SelectItem>
+                    <SelectItem value="monthly" className="rounded-lg my-0.5 font-medium cursor-pointer">Mensalmente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <DialogFooter className="gap-3 sm:gap-2 mt-8 pt-4">
@@ -226,7 +305,7 @@ export function TaskForm({ onAdd }: TaskFormProps) {
                 className="rounded-full px-8 font-semibold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
               >
                 {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Salvar Tarefa
+                {initialData ? "Salvar" : "Criar Tarefa"}
               </Button>
             </DialogFooter>
           </form>

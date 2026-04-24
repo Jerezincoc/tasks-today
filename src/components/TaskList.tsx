@@ -12,6 +12,7 @@ interface TaskListProps {
   loading: boolean;
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Task>) => void;
 }
 
 const TAB_META: Record<
@@ -46,7 +47,7 @@ const TAB_META: Record<
 
 const TAB_ORDER: TaskStatus[] = ["pending", "due-today", "overdue", "completed"];
 
-export function TaskList({ tasks, loading, onToggle, onDelete }: TaskListProps) {
+export function TaskList({ tasks, loading, onToggle, onDelete, onUpdate }: TaskListProps) {
   const grouped = useMemo(() => {
     const buckets: Record<TaskStatus, Task[]> = {
       pending: [],
@@ -56,6 +57,7 @@ export function TaskList({ tasks, loading, onToggle, onDelete }: TaskListProps) 
     };
     const now = new Date();
     for (const t of tasks) {
+      if (t.archived) continue;
       buckets[getTaskStatus(t, now)].push(t);
     }
     (Object.keys(buckets) as TaskStatus[]).forEach((k) => {
@@ -133,6 +135,7 @@ export function TaskList({ tasks, loading, onToggle, onDelete }: TaskListProps) 
                       key={task.id}
                       task={task}
                       onToggle={onToggle}
+                      onUpdate={onUpdate}
                       onDelete={onDelete}
                     />
                   ))}

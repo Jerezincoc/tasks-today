@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { usePreferences } from "@/hooks/usePreferences";
 
 import appCss from "../styles.css?url";
 
@@ -31,16 +33,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "To do List — Organize suas tarefas" },
-      { name: "description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "To do List — Organize suas tarefas" },
-      { property: "og:description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "To do List — Organize suas tarefas" },
-      { name: "twitter:description", content: "Aplicativo de lista de tarefas com autenticação. Crie, marque e gerencie suas tarefas com facilidade." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e830cbdb-1d39-4e0a-ad1b-b46c6e45dd40" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e830cbdb-1d39-4e0a-ad1b-b46c6e45dd40" },
+      { name: "description", content: "Aplicativo de lista de tarefas com autenticação." },
     ],
     links: [
       {
@@ -67,9 +60,53 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
 });
 
+function ThemeSync() {
+  const { theme } = usePreferences();
+  
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark", "alto-contraste");
+
+    if (theme === "sistema") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    if (theme === "escuro") {
+       root.classList.add("dark");
+    } else if (theme === "alto-contraste") {
+       root.classList.add("alto-contraste");
+    } else {
+       root.classList.add("light");
+    }
+  }, [theme]);
+
+  // Handle system theme changes
+  useEffect(() => {
+     if (usePreferences.getState().theme !== "sistema") return;
+     
+     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+     const handleChange = (e: MediaQueryListEvent) => {
+        const root = window.document.documentElement;
+        if (usePreferences.getState().theme === "sistema") {
+           root.classList.remove("light", "dark");
+           root.classList.add(e.matches ? "dark" : "light");
+        }
+     };
+     mediaQuery.addEventListener("change", handleChange);
+     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  return null;
+}
+
 function RootShell({ children }: { children: React.ReactNode }) {
+  // Let ThemeSync execute on client safely
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>
@@ -84,6 +121,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <>
+      <ThemeSync />
       <Outlet />
       <Toaster richColors position="top-right" />
     </>
