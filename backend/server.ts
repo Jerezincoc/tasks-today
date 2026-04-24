@@ -76,6 +76,65 @@ app.post('/api/profiles/update', async (req, res) => {
   }
 });
 
+// Busca o Profile do usuário (com a flag force_password_change)
+app.get('/api/profiles/me', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Acesso Negado.' });
+    }
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) return res.status(401).json({ error: 'Token inválido' });
+
+    const { data: profile, error: dbError } = await supabaseAdmin
+       .from('profiles')
+       .select('first_name, last_name, nickname, force_password_change')
+       .eq('id', user.id)
+       .single();
+
+    if (dbError && dbError.code !== 'PGRST116') { // Ignora row not found
+       console.error(dbError);
+       return res.status(500).json({ error: 'Erro consultando DB.' });
+    }
+
+    return res.status(200).json({ data: profile || null });
+  } catch(e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Erro interno fatal' });
+  }
+});
+
+// Desliga o bloqueio de troca de senha no DB
+app.post('/api/profiles/reset-force-password', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Acesso Negado.' });
+    }
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) return res.status(401).json({ error: 'Token inválido' });
+
+    const { error: dbError } = await supabaseAdmin
+       .from('profiles')
+       .update({ force_password_change: false })
+       .eq('id', user.id);
+
+    if (dbError) {
+       console.error(dbError);
+       return res.status(500).json({ error: 'Erro resetando a flag.' });
+    }
+
+    return res.status(200).json({ message: 'Flag removida com sucesso' });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Erro interno fatal' });
+  }
+});
+
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);

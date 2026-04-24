@@ -118,10 +118,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { PasswordChangeOverlay } from "@/components/PasswordChangeOverlay";
+
 function RootComponent() {
   return (
     <>
       <ThemeSync />
+      <PasswordChangeOverlay />
       <Outlet />
       <Toaster richColors position="top-right" />
     </>
