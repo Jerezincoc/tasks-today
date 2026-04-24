@@ -7,6 +7,7 @@ import { Trash2, X, Check, Clock, AlertTriangle } from "lucide-react";
 import type { Task } from "@/hooks/useTasks";
 import { cn } from "@/lib/utils";
 import { PRIORITY_LABELS, PRIORITY_STYLES, getTaskStatus } from "@/lib/tasks";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TaskItemProps {
   task: Task;
@@ -30,29 +31,34 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
   const isDueToday = status === "due-today" && !task.completed;
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
+      transition={{ duration: 0.25, type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ scale: 1.015 }}
       className={cn(
-        "group flex items-start gap-3 p-3 rounded-lg border bg-card transition-all",
-        "hover:shadow-sm",
+        "group flex items-start gap-4 p-4 rounded-2xl border bg-card/60 backdrop-blur-md shadow-sm transition-all duration-300",
         task.completed
-          ? "border-border opacity-60"
+          ? "border-border/30 opacity-50 grayscale-[0.3]"
           : isOverdue
-            ? "border-[var(--status-overdue)]/40 hover:border-[var(--status-overdue)]/60"
+            ? "border-[var(--status-overdue)]/50 shadow-[var(--status-overdue)]/10 hover:shadow-[var(--status-overdue)]/20 hover:border-[var(--status-overdue)]"
             : isDueToday
-              ? "border-[var(--status-due-today)]/40 hover:border-[var(--status-due-today)]/60"
-              : "border-border hover:border-primary/30",
+              ? "border-[var(--status-due-today)]/50 shadow-[var(--status-due-today)]/10 hover:shadow-[var(--status-due-today)]/20 hover:border-[var(--status-due-today)]"
+              : "border-border/50 hover:border-primary/50 hover:shadow-primary/10 shadow-black/5",
       )}
     >
       <Checkbox
         checked={task.completed}
         onCheckedChange={(v) => onToggle(task.id, Boolean(v))}
-        className="h-5 w-5 mt-0.5"
+        className="h-6 w-6 mt-0.5 rounded-full border-2 transition-colors data-[state=checked]:bg-primary data-[state=checked]:border-primary"
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           <span
             className={cn(
-              "text-sm text-foreground transition-all break-words flex-1 min-w-0",
+              "text-base font-medium text-foreground transition-all break-words flex-1 min-w-0",
               task.completed && "line-through text-muted-foreground",
             )}
           >
@@ -60,7 +66,7 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
           </span>
           <span
             className={cn(
-              "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border whitespace-nowrap",
+              "text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border shadow-sm whitespace-nowrap",
               PRIORITY_STYLES[task.priority],
             )}
           >
@@ -70,8 +76,8 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
         {task.description && (
           <p
             className={cn(
-              "text-xs text-muted-foreground mt-1 break-words",
-              task.completed && "line-through",
+              "text-sm text-foreground/70 mt-1.5 break-words line-clamp-2",
+              task.completed && "line-through opacity-70",
             )}
           >
             {task.description}
@@ -80,61 +86,75 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
         {task.due_date && (
           <div
             className={cn(
-              "flex items-center gap-1 mt-1.5 text-xs",
+              "flex items-center gap-1.5 mt-3 text-xs font-medium px-2 py-1 bg-background/50 rounded-md w-fit border border-border/30",
               task.completed
                 ? "text-muted-foreground"
                 : isOverdue
-                  ? "text-[var(--status-overdue)] font-medium"
+                  ? "text-[var(--status-overdue)]"
                   : isDueToday
-                    ? "text-[var(--status-due-today)] font-medium"
+                    ? "text-[var(--status-due-today)]"
                     : "text-muted-foreground",
             )}
           >
             {isOverdue ? (
-              <AlertTriangle className="h-3 w-3" />
+              <AlertTriangle className="h-3.5 w-3.5" />
             ) : (
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3.5 w-3.5" />
             )}
             <span>{formatDue(task.due_date)}</span>
-            {isOverdue && <span className="ml-1">• em atraso</span>}
+            {isOverdue && <span className="ml-1 opacity-80 uppercase text-[10px] tracking-wider font-bold">• Vencida</span>}
           </div>
         )}
       </div>
-      {confirming ? (
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              onDelete(task.id);
-              setConfirming(false);
-            }}
-            aria-label="Confirmar exclusão"
+      <AnimatePresence mode="popLayout">
+        {confirming ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="flex items-center gap-1"
           >
-            <Check className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8"
-            onClick={() => setConfirming(false)}
-            aria-label="Cancelar"
+            <Button
+              size="icon"
+              variant="destructive"
+              className="h-8 w-8 rounded-full shadow-lg shadow-destructive/20"
+              onClick={() => {
+                onDelete(task.id);
+                setConfirming(false);
+              }}
+              aria-label="Confirmar exclusão"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-8 w-8 rounded-full bg-background/50 backdrop-blur"
+              onClick={() => setConfirming(false)}
+              aria-label="Cancelar"
+            >
+              <X className="h-4 w-4 text-foreground/80" />
+            </Button>
+          </motion.div>
+        ) : (
+          <motion.div
+             initial={{ opacity: 0 }} 
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-          onClick={() => setConfirming(true)}
-          aria-label="Deletar tarefa"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+              onClick={() => setConfirming(true)}
+              aria-label="Deletar tarefa"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

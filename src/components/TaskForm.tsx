@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PRIORITY_LABELS, type Priority } from "@/lib/tasks";
 import type { NewTaskInput } from "@/hooks/useTasks";
+import { motion, AnimatePresence } from "framer-motion";
 
 const schema = z.object({
   title: z.string().trim().min(1, "Digite o título").max(500, "Máximo de 500 caracteres"),
@@ -96,129 +97,140 @@ export function TaskForm({ onAdd }: TaskFormProps) {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="h-11 w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Nova tarefa
+        <Button className="h-12 px-6 rounded-full shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all w-full sm:w-auto font-semibold group">
+          <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+          Nova Tarefa
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Nova tarefa</DialogTitle>
-          <DialogDescription>
-            Adicione título, prazo e prioridade. Se não informar a hora, será às 08:00.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input
-              id="title"
-              placeholder="O que precisa ser feito?"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={500}
-              autoFocus
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição (opcional)</Label>
-            <Textarea
-              id="description"
-              placeholder="Detalhes, contexto..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={2000}
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+      <DialogContent className="sm:max-w-md rounded-[24px] border-white/10 bg-card/80 backdrop-blur-3xl shadow-2xl overflow-hidden p-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none" />
+        <div className="p-6 relative z-10">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold tracking-tight">Criar Nova Tarefa</DialogTitle>
+            <DialogDescription className="text-muted-foreground/80 font-medium">
+              Defina os detalhes, prazo e prioridade da sua tarefa.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-5 mt-6">
             <div className="space-y-2">
-              <Label>Data de vencimento</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                    {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                    locale={ptBR}
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                  {date && (
-                    <div className="p-2 border-t">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-xs"
-                        onClick={() => setDate(undefined)}
-                      >
-                        Limpar data
-                      </Button>
-                    </div>
-                  )}
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="time">Hora</Label>
+              <Label htmlFor="title" className="font-semibold text-foreground/90">Título</Label>
               <Input
-                id="time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                disabled={!date}
+                id="title"
+                placeholder="Ex: Finalizar a apresentação de sexta"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={500}
+                autoFocus
+                className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Prioridade</Label>
-            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {PRIORITY_LABELS[p]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="description" className="font-semibold text-foreground/90">Descrição (opcional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Detalhes adicionais, links importantes..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                maxLength={2000}
+                rows={3}
+                className="resize-none bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl"
+              />
+            </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-              disabled={submitting}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={submitting || !title.trim()}>
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Criar tarefa
-            </Button>
-          </DialogFooter>
-        </form>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-semibold text-foreground/90">Prazo</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        "w-full h-11 justify-start text-left font-medium bg-background/50 border-white/10 hover:bg-background/80 transition-all rounded-xl",
+                        !date && "text-muted-foreground/70",
+                      )}
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2 opacity-70" />
+                      {date ? format(date, "dd/MMM", { locale: ptBR }) : "Sem prazo"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 rounded-2xl border-white/10 bg-card/90 backdrop-blur-2xl shadow-xl overflow-hidden" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                      locale={ptBR}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                    {date && (
+                      <div className="p-2 border-t border-white/10 bg-muted/20">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs rounded-lg hover:bg-destructive/20 hover:text-destructive transition-colors font-medium"
+                          onClick={() => setDate(undefined)}
+                        >
+                          Remover prazo
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="time" className="font-semibold text-foreground/90">Hora</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  disabled={!date}
+                  className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl disabled:opacity-30"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="font-semibold text-foreground/90">Prioridade</Label>
+              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+                <SelectTrigger className="h-11 bg-background/50 border-white/10 focus-visible:ring-primary/50 transition-all rounded-xl data-[state=open]:ring-primary/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl shadow-xl">
+                  {(Object.keys(PRIORITY_LABELS) as Priority[]).map((p) => (
+                    <SelectItem key={p} value={p} className="rounded-lg my-0.5 font-medium cursor-pointer">
+                      {PRIORITY_LABELS[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter className="gap-3 sm:gap-2 mt-8 pt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+                disabled={submitting}
+                className="rounded-full hover:bg-white/5 font-semibold transition-all"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={submitting || !title.trim()}
+                className="rounded-full px-8 font-semibold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+              >
+                {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Salvar Tarefa
+              </Button>
+            </DialogFooter>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
