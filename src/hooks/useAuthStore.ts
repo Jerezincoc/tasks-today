@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!session?.access_token) return;
 
     try {
-      const response = await fetch('http://localhost:4000/api/profiles/update', {
+      const response = await fetch('/api/profiles/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initializeAuth: () => {
     const fetchProfile = async (sessionParam: Session) => {
       try {
-        const response = await fetch('http://localhost:4000/api/profiles/me', {
+        const response = await fetch('/api/profiles/me', {
            headers: { 'Authorization': `Bearer ${sessionParam.access_token}` }
         });
         if (response.ok) {
