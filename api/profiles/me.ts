@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: profile, error: dbError } = await supabaseAdmin
       .from("profiles")
-      .select("first_name, last_name, nickname, force_password_change")
+      .select("first_name, last_name, nickname, force_password_change, theme, view_mode, usage_type, tasks_retention_days, onboarding_version")
       .eq("id", user.id)
       .single();
 

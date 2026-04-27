@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useAuthStore } from "@/hooks/useAuthStore";
@@ -122,11 +122,24 @@ function RootShell({ children }: { children: React.ReactNode }) {
 import { PasswordChangeOverlay } from "@/components/PasswordChangeOverlay";
 
 function RootComponent() {
-  const { initializeAuth } = useAuthStore();
+  const { initializeAuth, loading, user, profile } = useAuthStore();
+  const navigate = useNavigate();
+  const { location } = useRouterState();
 
   useEffect(() => {
     initializeAuth();
   }, []);
+
+  useEffect(() => {
+    if (
+      !loading &&
+      user &&
+      profile?.onboardingVersion === 0 &&
+      location.pathname !== "/onboarding"
+    ) {
+      navigate({ to: "/onboarding" });
+    }
+  }, [loading, user, profile?.onboardingVersion, location.pathname]);
 
   return (
     <>

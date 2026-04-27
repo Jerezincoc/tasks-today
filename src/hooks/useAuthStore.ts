@@ -7,6 +7,11 @@ export interface UserProfile {
   lastName: string;
   nickname?: string;
   force_password_change?: boolean;
+  theme?: string;
+  viewMode?: string;
+  usageType?: string;
+  tasksRetentionDays?: number;
+  onboardingVersion?: number;
 }
 
 interface AuthState {
@@ -20,7 +25,7 @@ interface AuthState {
   setProfile: (profile: UserProfile | null) => void;
   setLoading: (loading: boolean) => void;
   setMustChangePassword: (must: boolean) => void;
-  updateProfile: (profileData: UserProfile) => Promise<void>;
+  updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   initializeAuth: () => void;
 }
 
@@ -73,11 +78,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
            const result = await response.json();
            const pData = result.data;
            if (pData) {
-             set({ 
+             set({
                profile: {
                  firstName: pData.first_name,
                  lastName: pData.last_name,
                  nickname: pData.nickname,
+                 force_password_change: pData.force_password_change,
+                 theme: pData.theme,
+                 viewMode: pData.view_mode,
+                 usageType: pData.usage_type,
+                 tasksRetentionDays: pData.tasks_retention_days,
+                 onboardingVersion: pData.onboarding_version,
                },
                mustChangePassword: pData.force_password_change === true
              });

@@ -1,0 +1,6 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'light',
+  ADD COLUMN IF NOT EXISTS view_mode TEXT DEFAULT 'kanban',
+  ADD COLUMN IF NOT EXISTS usage_type TEXT DEFAULT 'personal',
+  ADD COLUMN IF NOT EXISTS tasks_retention_days INTEGER DEFAULT 30,
+  ADD COLUMN IF NOT EXISTS onboarding_version INTEGER DEFAULT 0;
