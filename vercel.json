@@ -1,8 +1,12 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/client",
+  "functions": {
+    "api/ssr.ts": {
+      "includeFiles": "dist/server/**"
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/profiles/(.*)", "destination": "/api/profiles/$1" },
+    { "source": "/(.*)", "destination": "/api/ssr" }
   ]
 }
