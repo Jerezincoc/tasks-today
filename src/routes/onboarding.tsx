@@ -79,7 +79,7 @@ const stepTitles = [
 ];
 
 function OnboardingPage() {
-  const { profile, session } = useAuthStore();
+  const { profile, session, setProfile } = useAuthStore();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -135,11 +135,22 @@ function OnboardingPage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Falha ao salvar preferências.");
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        console.error("POST /api/profiles/update failed:", res.status, errBody);
+        throw new Error(errBody?.error ?? "Falha ao salvar preferências.");
+      }
 
+      setProfile({
+        firstName: profile?.firstName ?? "",
+        lastName: profile?.lastName ?? "",
+        ...profile,
+        onboardingVersion: 1,
+      });
       toast.success("Tudo pronto! Bem-vindo(a)!");
       navigate({ to: "/" });
     } catch (err: unknown) {
+      console.error("saveAndFinish error:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao salvar.");
     } finally {
       setSaving(false);
