@@ -6,7 +6,7 @@ export interface PreferencesState {
   useDeadlines: boolean;
   complexity: 'simples' | 'avancado';
   defaultView: 'lista' | 'kanban' | 'calendario';
-  theme: 'claro' | 'escuro' | 'sistema';
+  theme: 'claro' | 'escuro' | 'sistema' | 'alto-contraste';
   completedRule: 'manter' | 'arquivar_7d' | 'deletar_7d';
   onboardingCompleted: boolean;
   

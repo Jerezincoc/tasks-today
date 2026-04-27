@@ -16,7 +16,7 @@ import { Loader2, KanbanSquare, LayoutList, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
-import type { Task } from "@/hooks/useTasks";
+import type { Task, NewTaskInput } from "@/hooks/useTasks";
 import { type Priority } from "@/lib/tasks";
 
 export const Route = createFileRoute("/")({
@@ -138,7 +138,7 @@ function Index() {
             >
               <ViewIcon className="h-5 w-5 opacity-80 text-primary" />
             </Button>
-            <TaskForm onSave={addTask} />
+            <TaskForm onSave={(input) => addTask(input as NewTaskInput)} />
           </motion.div>
         </div>
 
