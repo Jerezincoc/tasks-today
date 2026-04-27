@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useAuthStore } from "@/hooks/useAuthStore";
 
 import appCss from "../styles.css?url";
 
@@ -121,6 +122,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 import { PasswordChangeOverlay } from "@/components/PasswordChangeOverlay";
 
 function RootComponent() {
+  const { initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
   return (
     <>
       <ThemeSync />

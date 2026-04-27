@@ -17,19 +17,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
 import type { Task } from "@/hooks/useTasks";
+import { type Priority } from "@/lib/tasks";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { user, loading: authLoading, initializeAuth } = useAuthStore();
+  const { user, loading: authLoading } = useAuthStore();
   const navigate = useNavigate();
   const prefs = usePreferences();
-
-  useEffect(() => {
-    initializeAuth();
-  }, []);
 
   const signOut = async () => {
      await supabase.auth.signOut();
@@ -81,13 +78,15 @@ function Index() {
 
   const [activeFocusTask, setActiveFocusTask] = useState<Task | null>(null);
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen grid place-content-center bg-transparent">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  if (!user) return null;
 
   const cycleView = () => {
     const views = ['lista', 'kanban', 'calendario'] as const;

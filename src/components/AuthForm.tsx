@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/hooks/useAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const emailSchema = z.string().trim().email("Email inválido").max(255);
 const passwordSchema = z.string().min(6, "A senha deve ter no mínimo 6 caracteres").max(72);
+const firstNameSchema = z.string().trim().min(2, "O nome deve ter no mínimo 2 caracteres").max(50);
+const lastNameSchema = z.string().trim().max(50).optional();
 
 function translateError(message: string): string {
   const m = message.toLowerCase();
@@ -23,9 +26,12 @@ function translateError(message: string): string {
 }
 
 export function AuthForm() {
+  const { updateProfile } = useAuthStore();
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -56,13 +62,18 @@ export function AuthForm() {
     e.preventDefault();
     setLoading(true);
     try {
+      const validFirstName = firstNameSchema.parse(firstName);
+      const validLastName = lastNameSchema.parse(lastName) ?? "";
       const validEmail = emailSchema.parse(email);
       const validPassword = passwordSchema.parse(password);
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const { data, error } = await supabase.auth.signUp({
         email: validEmail,
         password: validPassword,
-        options: { emailRedirectTo: redirectUrl },
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: { first_name: validFirstName, last_name: validLastName },
+        },
       });
       if (error) {
         toast.error("Erro ao cadastrar", { description: translateError(error.message) });
@@ -72,6 +83,7 @@ export function AuthForm() {
         });
         setTab("login");
       } else {
+        await updateProfile({ firstName: validFirstName, lastName: validLastName });
         toast.success("Conta criada com sucesso!");
       }
     } catch (err) {
@@ -162,6 +174,33 @@ export function AuthForm() {
 
               <TabsContent value="signup" className="mt-0 outline-none">
                 <form onSubmit={handleSignUp} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-firstname" className="font-medium text-foreground/80 pl-1">Nome *</Label>
+                      <Input
+                        id="signup-firstname"
+                        type="text"
+                        placeholder="João"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                        autoComplete="given-name"
+                        className="h-12 bg-background/50 border-white/10 rounded-xl focus-visible:ring-primary/50 transition-all px-4"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-lastname" className="font-medium text-foreground/80 pl-1">Sobrenome</Label>
+                      <Input
+                        id="signup-lastname"
+                        type="text"
+                        placeholder="Silva"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        autoComplete="family-name"
+                        className="h-12 bg-background/50 border-white/10 rounded-xl focus-visible:ring-primary/50 transition-all px-4"
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="font-medium text-foreground/80 pl-1">Email</Label>
                     <Input
