@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export function PasswordChangeOverlay() {
-  const { session, mustChangePassword, setMustChangePassword } = useAuthStore();
+  const { mustChangePassword, setMustChangePassword } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,13 +34,20 @@ export function PasswordChangeOverlay() {
       if (authError) throw authError;
 
       // 2. Chama a API do Proxy para resetar o "force_password_change"
-      const res = await fetch('http://localhost:4000/api/profiles/reset-force-password', {
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const token = freshSession?.access_token;
+
+      const res = await fetch('/api/profiles/reset-force-password', {
         method: 'POST',
         headers: {
-           'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         }
       });
-      if (!res.ok) throw new Error('Falha ao resetar a trava de segurança no banco.');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        throw new Error(errBody?.error ?? 'Falha ao resetar a trava de segurança no banco.');
+      }
 
       toast.success('Senha atualizada com sucesso!');
       setMustChangePassword(false);
