@@ -6,11 +6,7 @@
       "includeFiles": "dist/server/**"
     }
   },
-  "routes": [
-    { "src": "/api/profiles/me", "dest": "/api/profiles/me" },
-    { "src": "/api/profiles/update", "dest": "/api/profiles/update" },
-    { "src": "/api/profiles/reset-force-password", "dest": "/api/profiles/reset-force-password" },
-    { "src": "/api/profiles/change-password", "dest": "/api/profiles/change-password" },
-    { "src": "/(.*)", "dest": "/api/ssr" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/ssr" }
   ]
 }

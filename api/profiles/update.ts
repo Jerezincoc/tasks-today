@@ -17,6 +17,7 @@ const updateProfileSchema = z.object({
   usageType: z.string().optional(),
   tasksRetentionDays: z.number().int().min(0).optional(),
   onboardingVersion: z.number().int().min(0).optional(),
+  password: z.string().min(6).optional(),
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -41,6 +42,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const validatedData = updateProfileSchema.parse(req.body);
+
+    if (validatedData.password) {
+      const { error: pwError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        password: validatedData.password,
+      });
+      if (pwError) {
+        console.error("admin.updateUserById error:", pwError);
+        return res.status(500).json({ error: pwError.message });
+      }
+    }
 
     const upsertPayload: Record<string, unknown> = {
       id: user.id,

@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/hooks/useAuthStore";
-import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,25 +112,6 @@ function OnboardingPage() {
 
     setSaving(true);
     try {
-      if (withPassword && newPassword) {
-        const {
-          data: { session: currentSession },
-        } = await supabase.auth.getSession();
-        const pwRes = await fetch("/api/profiles/change-password", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${currentSession?.access_token}`,
-          },
-          body: JSON.stringify({ password: newPassword }),
-        });
-        if (!pwRes.ok) {
-          const errBody = await pwRes.json().catch(() => null);
-          console.error("POST /api/profiles/change-password failed:", pwRes.status, errBody);
-          throw new Error(errBody?.error ?? "Falha ao definir a senha.");
-        }
-      }
-
       const res = await fetch("/api/profiles/update", {
         method: "PATCH",
         headers: {
@@ -146,6 +126,7 @@ function OnboardingPage() {
           usageType,
           tasksRetentionDays,
           onboardingVersion: 1,
+          ...(withPassword && newPassword ? { password: newPassword } : {}),
         }),
       });
 
