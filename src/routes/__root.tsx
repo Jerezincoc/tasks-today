@@ -134,12 +134,13 @@ function RootComponent() {
     if (
       !loading &&
       user &&
-      profile?.onboardingVersion === 0 &&
+      profile !== null &&
+      profile.onboardingVersion === 0 &&
       location.pathname !== "/onboarding"
     ) {
       navigate({ to: "/onboarding" });
     }
-  }, [loading, user, profile?.onboardingVersion, location.pathname]);
+  }, [loading, user, profile, location.pathname]);
 
   return (
     <>

@@ -26,7 +26,10 @@ function SettingsPage() {
   const { user, profile, updateProfile } = useAuthStore();
   const navigate = useNavigate({ from: "/settings" });
   const { tab } = Route.useSearch();
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" });
+  };
   const { setPreferences, ...prefs } = usePreferences();
 
   // Perfil
@@ -103,6 +106,7 @@ function SettingsPage() {
     try {
       await supabase.auth.signOut({ scope: "global" });
       toast.success("Todas as sessões foram encerradas.");
+      navigate({ to: "/auth" });
     } catch (err: any) {
       toast.error("Erro ao encerrar sessões: " + err.message);
     } finally {
