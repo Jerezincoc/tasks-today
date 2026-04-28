@@ -79,7 +79,7 @@ const stepTitles = [
 ];
 
 function OnboardingPage() {
-  const { profile, setProfile } = useAuthStore();
+  const { profile, setProfile, setMustChangePassword } = useAuthStore();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -140,11 +140,27 @@ function OnboardingPage() {
         throw new Error(errBody?.error ?? "Falha ao salvar preferências.");
       }
 
+      if (forcePasswordChange && withPassword) {
+        const resetRes = await fetch('/api/profiles/reset-force-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!resetRes.ok) {
+          const errBody = await resetRes.json().catch(() => null);
+          throw new Error(errBody?.error ?? 'Falha ao remover trava de senha.');
+        }
+        setMustChangePassword(false);
+      }
+
       setProfile({
         firstName: profile?.firstName ?? "",
         lastName: profile?.lastName ?? "",
         ...profile,
         onboardingVersion: 1,
+        force_password_change: false,
       });
       toast.success("Tudo pronto! Bem-vindo(a)!");
       navigate({ to: "/" });

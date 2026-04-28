@@ -119,10 +119,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-import { PasswordChangeOverlay } from "@/components/PasswordChangeOverlay";
-
 function RootComponent() {
-  const { initializeAuth, loading, user, profile } = useAuthStore();
+  const { initializeAuth, loading, user, profile, mustChangePassword } = useAuthStore();
   const navigate = useNavigate();
   const { location } = useRouterState();
 
@@ -135,17 +133,16 @@ function RootComponent() {
       !loading &&
       user &&
       profile !== null &&
-      profile.onboardingVersion === 0 &&
+      (profile.onboardingVersion === 0 || mustChangePassword) &&
       location.pathname !== "/onboarding"
     ) {
       navigate({ to: "/onboarding" });
     }
-  }, [loading, user, profile, location.pathname]);
+  }, [loading, user, profile, mustChangePassword, location.pathname]);
 
   return (
     <>
       <ThemeSync />
-      <PasswordChangeOverlay />
       <Outlet />
       <Toaster richColors position="top-right" />
     </>
