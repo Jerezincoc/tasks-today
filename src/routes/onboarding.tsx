@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuthStore } from "@/hooks/useAuthStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +79,7 @@ const stepTitles = [
 ];
 
 function OnboardingPage() {
-  const { profile, session, setProfile } = useAuthStore();
+  const { profile, setProfile } = useAuthStore();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -112,11 +113,14 @@ function OnboardingPage() {
 
     setSaving(true);
     try {
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const token = freshSession?.access_token;
+
       const res = await fetch("/api/profiles/update", {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           firstName: firstName.trim() || profile?.firstName || "",
