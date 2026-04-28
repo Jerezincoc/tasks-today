@@ -7,7 +7,7 @@
     }
   },
   "rewrites": [
-    { "source": "/api/profiles/(.*)", "destination": "/api/profiles/$1" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/api/ssr" }
   ]
 }
