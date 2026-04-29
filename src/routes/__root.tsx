@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useAuthStore } from "@/hooks/useAuthStore";
 
-const ALLOWED_HOSTS = ["tasks-today-sable.vercel.app", "localhost"];
 const NEW_URL = "https://tasks-today-sable.vercel.app";
 const BANNER_KEY = "banner_migrado_fechado";
 
@@ -108,7 +107,7 @@ export const Route = createRootRoute({
 
 function ThemeSync() {
   const { theme } = usePreferences();
-  
+
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark", "alto-contraste");
@@ -133,7 +132,7 @@ function ThemeSync() {
   // Handle system theme changes
   useEffect(() => {
      if (usePreferences.getState().theme !== "sistema") return;
-     
+
      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
      const handleChange = (e: MediaQueryListEvent) => {
         const root = window.document.documentElement;
@@ -150,9 +149,9 @@ function ThemeSync() {
 }
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  const isAllowed = ALLOWED_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`));
+  const isLovable = typeof window !== "undefined" && window.location.hostname.includes("lovable.app");
 
-  if (!isAllowed) {
+  if (isLovable) {
     return (
       <html lang="pt-BR">
         <head><HeadContent /></head>
