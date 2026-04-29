@@ -113,8 +113,14 @@ function OnboardingPage() {
 
     setSaving(true);
     try {
-      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      const { data: { session: freshSession } } = await supabase.auth.refreshSession();
       const token = freshSession?.access_token;
+
+      if (!token) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate({ to: "/auth" });
+        return;
+      }
 
       const res = await fetch("/api/profiles/update", {
         method: "POST",
