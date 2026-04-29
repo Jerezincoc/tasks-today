@@ -1,8 +1,53 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useAuthStore } from "@/hooks/useAuthStore";
+
+const ALLOWED_HOSTS = ["tasks-today-sable.vercel.app", "localhost"];
+const NEW_URL = "https://tasks-today-sable.vercel.app";
+const BANNER_KEY = "banner_migrado_fechado";
+
+function WrongDomain() {
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif", background: "#f9fafb" }}>
+      <div style={{ textAlign: "center", padding: "2rem" }}>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: "0.5rem" }}>Mudamos de endereço!</h1>
+        <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>Acesse pelo novo link para continuar usando o Tasks Today.</p>
+        <a
+          href={NEW_URL}
+          style={{ display: "inline-block", background: "#2563eb", color: "#fff", padding: "0.625rem 1.25rem", borderRadius: "0.375rem", textDecoration: "none", fontWeight: 500 }}
+        >
+          Ir para o novo endereço
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function MigrationBanner() {
+  const [visible, setVisible] = useState(() => !localStorage.getItem(BANNER_KEY));
+
+  if (!visible) return null;
+
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, background: "#dbeafe", borderBottom: "1px solid #93c5fd", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
+      <span>
+        Temos um endereço novo! Salva nos favoritos:{" "}
+        <a href={NEW_URL} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: "#1d4ed8", textDecoration: "underline" }}>
+          tasks-today-sable.vercel.app
+        </a>
+      </span>
+      <button
+        onClick={() => { localStorage.setItem(BANNER_KEY, "true"); setVisible(false); }}
+        style={{ marginLeft: "0.75rem", background: "transparent", border: "none", cursor: "pointer", fontSize: "1rem", lineHeight: 1, color: "#374151" }}
+        aria-label="Fechar"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 import appCss from "../styles.css?url";
 
@@ -105,7 +150,17 @@ function ThemeSync() {
 }
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  // Let ThemeSync execute on client safely
+  const isAllowed = ALLOWED_HOSTS.some(h => window.location.hostname === h || window.location.hostname.endsWith(`.${h}`));
+
+  if (!isAllowed) {
+    return (
+      <html lang="pt-BR">
+        <head><HeadContent /></head>
+        <body><WrongDomain /><Scripts /></body>
+      </html>
+    );
+  }
+
   return (
     <html lang="pt-BR">
       <head>
@@ -142,6 +197,7 @@ function RootComponent() {
 
   return (
     <>
+      <MigrationBanner />
       <ThemeSync />
       <Outlet />
       <Toaster richColors position="top-right" />
