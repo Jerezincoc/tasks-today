@@ -33,12 +33,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq("id", user.id)
       .single();
 
-    if (dbError && dbError.code !== "PGRST116") {
+    if (dbError) {
+      if (dbError.code === "PGRST116") {
+        return res.status(404).json({ error: "profile_not_found" });
+      }
       console.error(dbError);
       return res.status(500).json({ error: "Erro consultando DB." });
     }
 
-    return res.status(200).json({ data: profile || null });
+    return res.status(200).json({ data: profile });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: "Erro interno fatal" });

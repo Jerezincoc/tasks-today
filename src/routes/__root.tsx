@@ -190,8 +190,7 @@ function RootComponent() {
     if (
       !loading &&
       user &&
-      profile !== null &&
-      (profile.onboardingVersion === 0 || mustChangePassword) &&
+      (profile === null || profile.onboardingVersion === 0 || mustChangePassword) &&
       location.pathname !== "/onboarding"
     ) {
       navigate({ to: "/onboarding" });
