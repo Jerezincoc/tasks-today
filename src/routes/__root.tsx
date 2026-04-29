@@ -25,7 +25,11 @@ function WrongDomain() {
 }
 
 function MigrationBanner() {
-  const [visible, setVisible] = useState(() => !localStorage.getItem(BANNER_KEY));
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem(BANNER_KEY)) setVisible(true);
+  }, []);
 
   if (!visible) return null;
 
