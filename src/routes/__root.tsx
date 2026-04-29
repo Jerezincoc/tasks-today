@@ -149,7 +149,7 @@ function ThemeSync() {
 }
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  const isLovable = window.location.hostname.includes("lovable.app");
+  const isLovable = typeof window !== "undefined" && window.location.hostname.includes("lovable.app");
 
   if (isLovable) {
     return (
